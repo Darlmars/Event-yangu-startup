@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Event Yangu - Premium Event Booking</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+</head>
+
+<body>
+    <!-- Header -->
+    <header class="header" id="header">
+        <nav class="nav-container">
+            <div class="logo">Event Yangu</div>
+            <ul class="nav-links">
+                <li><a href="#" class="active">Home</a></li>
+                <li><a href="#">Events</a></li>
+                <li><a href="#">Organizers</a></li>
+                <li><a href="#">My Tickets</a></li>
+                <li><a href="#">Dashboard</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="hero-content">
+            <h1 class="fade-in">Discover Amazing Events</h1>
+            <p class="fade-in">Find and book the best events in Nairobi and across Kenya</p>
+
+            <div class="search-container">
+                <input type="text" class="search-bar" placeholder="Search events, venues, artists..." id="searchInput">
+                <div class="location-icon">📍</div>
+                <div class="voice-icon" onclick="startVoiceSearch()">🎤</div>
+                <div class="search-icon" onclick="performSearch()">🔍</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Categories -->
+    <section class="categories">
+        <div class="categories-container">
+            <a href="#" class="category-pill active">All</a>
+            <a href="#" class="category-pill">Educational</a>
+            <a href="#" class="category-pill">Sporting</a>
+            <a href="#" class="category-pill">Recreational</a>
+            <a href="#" class="category-pill">Corporate</a>
+            <a href="#" class="category-pill">Music</a>
+            <a href="#" class="category-pill">Tech</a>
+            <a href="#" class="category-pill">Food & Drink</a>
+        </div>
+    </section>
+
+    <!-- Featured Events -->
+    <section class="featured-events">
+        <h2 class="section-title fade-in">🔥 Featured Events</h2>
+        <div class="carousel" id="carousel">
+            <!-- Event cards will be populated by JavaScript -->
+        </div>
+    </section>
+
+    <!-- Events Grid -->
+    <section class="events-grid" id="eventsGrid">
+        <!-- Event cards will be populated by JavaScript -->
+    </section>
+
+    <!-- Event Detail Modal (Hidden by default) -->
+    <div id="eventModal" class="event-detail" style="display: none;">
+        <!-- Event detail content populated by JavaScript -->
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast"></div>
+
+    <script>
+        // Sample event data
+        const events = [{
+                id: 1,
+                title: "Nairobi Tech Summit 2026",
+                category: "Tech",
+                image: "https://images.unsplash.com/photo-1516321310764-8a2380f89148?w=400",
+                location: "KICC, Nairobi",
+                date: "March 20, 2026",
+                time: "9:00 AM - 6:00 PM",
+                price: "KSh 5,000",
+                badge: "Selling Fast"
+            },
+            {
+                id: 2,
+                title: "Afrobeat Festival",
+                category: "Music",
+                image: "https://images.unsplash.com/photo-1571866197434-fd6f63a9a6f2?w=400",
+                location: "Uhuru Gardens",
+                date: "April 5, 2026",
+                time: "2:00 PM - 11:00 PM",
+                price: "KSh 2,500",
+                badge: "Trending"
+            },
+            {
+                id: 3,
+                title: "Kenya Premier League",
+                category: "Sporting",
+                image: "https://images.unsplash.com/photo-1552664730-d307ca884978?w=400",
+                location: "Nyayo Stadium",
+                date: "March 15, 2026",
+                time: "3:00 PM",
+                price: "KSh 500",
+                badge: "Selling Fast"
+            }
+        ];
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', function() {
+            createFeaturedCarousel();
+            createEventsGrid();
+            setupScrollEffects();
+            setupCategoryScroll();
+            setupIntersectionObserver();
+        });
+
+        // Voice Search (Web Speech API)
+        function startVoiceSearch() {
+            if ('webkitSpeechRecognition' in window) {
+                const recognition = new webkitSpeechRecognition();
+                recognition.continuous = false;
+                recognition.interimResults = false;
+                recognition.lang = 'en-KE';
+
+                recognition.onresult = function(event) {
+                    const transcript = event.results[0][0].transcript;
+                    document.getElementById('searchInput').value = transcript;
+                    performSearch();
+                };
+
+                recognition.onerror = function() {
+                    showToast('Voice search not available');
+                };
+
+                recognition.start();
+            } else {
+                showToast('Voice search not supported');
+            }
+        }
+
+        // Search functionality
+        function performSearch() {
+            const query = document.getElementById('searchInput').value;
+            showToast(`Searching for "${query}"`);
+        }
+
+        // Create featured carousel
+        function createFeaturedCarousel() {
+            const carousel = document.getElementById('carousel');
+            events.forEach(event => {
+                const card = createEventCard(event);
+                carousel.appendChild(card);
+            });
+        }
+
+        // Create events grid
+        function createEventsGrid() {
+            const grid = document.getElementById('eventsGrid');
+            // Duplicate events for grid
+            events.concat(events).forEach(event => {
+                const card = createEventCard(event, true);
+                grid.appendChild(card);
+            });
+        }
+
+        // Create individual event card
+        function createEventCard(event, isGrid = false) {
+            const card = document.createElement('div');
+            card.className = `event-card ${isGrid ? 'fade-in' : ''}`;
+            card.innerHTML = `
+        <div class="event-image">
+          <img src="${event.image}" alt="${event.title}" loading="lazy">
+          <div class="badge">${event.badge}</div>
+        </div>
+        <div class="event-content">
+          <div class="event-category">${event.category}</div>
+          <h3 class="event-title">${event.title}</h3>
+          <div class="event-meta">
+            <span>📍 ${event.location}</span>
+            <span>📅 ${event.date}</span>
+          </div>
+          <div class="event-price">${event.price}</div>
+          <button class="cta-button" onclick="${isGrid ? `openEventDetail(${event.id})` : ''}">
+            ${isGrid ? 'View Details' : 'Book Now'}
+          </button>
+        </div>
+      `;
+            return card;
+        }
+
+        // Event detail modal
+        function openEventDetail(eventId) {
+            const event = events.find(e => e.id === eventId);
+            document.getElementById('eventModal').style.display = 'block';
+            document.body.style.overflow = 'hidden';
+            // Populate modal content (simplified)
+            showToast('Event details opened');
+        }
